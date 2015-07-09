@@ -33,6 +33,34 @@ end
 #
 ##########################################################################################
 
+class EachCursor
+  include org.ardverk.collection.Cursor
+
+  attr_reader :key
+  attr_reader :value
+
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+
+  def initialize(&block)
+    @block = block
+  end
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+  
+  def select(entry)
+    @block.call(entry.getKey(), entry.getValue())
+    Decision::CONTINUE
+  end
+  
+end
+
+##########################################################################################
+#
+##########################################################################################
+
 class EntryListsCursor
   include org.ardverk.collection.Cursor
 
@@ -104,6 +132,7 @@ end
 class Critbit
   include_package "io.prelink.critbit"
   include_package "org.ardverk.collection"
+  include Enumerable
   
   attr_reader :java_critbit
   attr_reader :default
@@ -124,6 +153,15 @@ class Critbit
 
   def clear
     @java_critbit.clear
+  end
+  
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+
+  def each(&block)
+    cursor = EachCursor.new(&block)
+    @java_critbit.traverse(cursor)
   end
   
   #------------------------------------------------------------------------------------

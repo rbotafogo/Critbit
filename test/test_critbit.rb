@@ -46,6 +46,7 @@ class CritbitTest < Test::Unit::TestCase
       
       crit["hello"] = 0
       crit["there"] = 1
+      crit["essa"] = 10
       crit["Essa é uma frase para armazenar"] = 100
       assert_equal(0, crit["hello"])
       assert_equal(1, crit["there"])
@@ -53,7 +54,7 @@ class CritbitTest < Test::Unit::TestCase
       crit["works?"] = [10, 20, 30]
       assert_equal([10, 20, 30], crit["works?"])
       assert_equal(["works?", [10, 20, 30]], crit.assoc("works?"))
-      assert_equal(4, crit.size)
+      assert_equal(5, crit.size)
       assert_equal(false, crit.has_key?("Not there"))
       assert_equal(["Essa é uma frase para armazenar", 100], crit.min)
       assert_equal(["works?", [10, 20, 30]], crit.max)
@@ -71,6 +72,14 @@ class CritbitTest < Test::Unit::TestCase
         crit[item] = item
       end
 
+      crit.each do |key, value|
+        p "key: #{key}, value: #{value}"
+      end
+
+      p crit.any? { |key, value| key == "uni" }
+      p crit.entries
+      p crit.include?(["a", "a"])
+      
       p crit.get_all
       p crit.get_all("uni")
       p crit.keys
