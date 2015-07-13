@@ -137,6 +137,7 @@ class Critbit
   attr_reader :java_critbit
   attr_reader :default
   attr_reader :default_proc
+  attr_reader :prefix
   
   #------------------------------------------------------------------------------------
   #
@@ -145,6 +146,7 @@ class Critbit
   def initialize(default = nil, &block)
     @default = default
     @default_proc = block
+    @prefix = nil
     @java_critbit =  MCritBitTree.new(StringKeyAnalyzer.new)
   end
   
@@ -226,9 +228,9 @@ class Critbit
   #
   #------------------------------------------------------------------------------------
 
-  def each(&block)
+  def each(prefix = nil, &block)
     cursor = EachCursor.new(&block)
-    @java_critbit.traverse(cursor)
+    _get(cursor, prefix)
   end
     
   #------------------------------------------------------------------------------------
@@ -269,6 +271,14 @@ class Critbit
   #
   #------------------------------------------------------------------------------------
 
+  def prefix=(pre)
+    @prefix = pre
+  end
+  
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+
   def size
     @java_critbit.size()
   end
@@ -289,15 +299,6 @@ class Critbit
   #------------------------------------------------------------------------------------
 
   # Methods that are not in Hash interface
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-
-  def get_all(prefix = nil)
-    cursor = EntryListsCursor.new
-    _get(cursor, prefix)
-  end
 
   #------------------------------------------------------------------------------------
   #
@@ -326,6 +327,7 @@ class Critbit
   #------------------------------------------------------------------------------------
 
   def _get(cursor, prefix = nil)
+    prefix ||= @prefix
     (prefix)? @java_critbit.traverseWithPrefix(prefix, cursor) :
       @java_critbit.traverse(cursor)
     cursor

@@ -49,7 +49,13 @@ class CritbitTest < Test::Unit::TestCase
       
       crit = Critbit.new { |h, k, val| h[k] = 0.0/0.0 }
       assert_equal(0, crit.size)
+
+      # Since there is a default_proc, this will be called whenever the key is not present
+      # in the container.  "null" is not a key, checking for crit["null"] will add the key
+      # with the default NaN (0.0/0.0) value.
       assert_equal(true, crit["null"].nan?)
+
+      # The size of the repository is now 1 since the key "null" was added.
       assert_equal(1, crit.size)
       
     end
@@ -96,14 +102,18 @@ class CritbitTest < Test::Unit::TestCase
       assert_equal(true, crit.has_value?(100))
       assert_equal(true, crit.has_value?([10, 20, 30]))
       assert_equal(false, crit.has_value?("hello"))
-               
+
+      # Critbit implements the each method, so all methods from Enumerable can be called
+      assert_equal([["Essa \u00E9 uma frase para armazenar", 100], ["essa", 10],
+                    ["there", 1], ["works?", [10, 20, 30]]], crit.entries)
+
     end
 
     #-------------------------------------------------------------------------------------
     #
     #-------------------------------------------------------------------------------------
 
-    should "Filter by prefix" do
+    should "use each with prefix" do
 
       crit = Critbit.new
 
@@ -118,22 +128,59 @@ class CritbitTest < Test::Unit::TestCase
         crit[item] = item
       end
 
+      # Does each for all elements in the container
       crit.each do |key, value|
         assert_equal(value, crit[key])
       end
 
-      assert_equal(true, crit.any? { |key, value| key == "uni" })
+      # Each can also filter by prefix.  Let's try prefix unin
+      pre = ["unin", "uninc", "unind", "unine", "unindd", "uninde", "unindf",
+             "unindew", "unindex", "unindey"]
+      crit.each("unin") do |key, value|
+        assert_equal(true, pre.include?(key))
+      end
 
-      p crit.entries
-      p crit.include?(["a", "a"])
+      # Those are not prefixed by unin
+      flse = ["u", "un", "unh", "uni", "unj", "unim", "unio", "a", "z"]
+      crit.each("unin") do |key, value|
+        assert_equal(false, flse.include?(key))
+      end
+
+      # Using unind as prefix...
+      pre = ["unind", "unindd", "uninde", "unindf", "unindew", "unindex", "unindey"]
+      crit.each("unind") do |key, value|
+        assert_equal(true, pre.include?(key))
+      end
+
+      # sets the crit prefix.  From now on, only keys with prefix "unin" will be retrieved
+      # even when the prefix is not part of the parameter list as above
+      crit.prefix = "unin"
+
+      # all unin prefix should be retrieved
+      pre = ["unin", "uninc", "unind", "unine", "unindd", "uninde", "unindf",
+             "unindew", "unindex", "unindey"]
+      crit.each do |key, value|
+        assert_equal(true, pre.include?(key))
+      end
+
+      # all keys that do not have a unin prefix are not retrieved
+      flse = ["u", "un", "unh", "uni", "unj", "unim", "unio", "a", "z"]
+      crit.each do |key, value|
+        assert_equal(false, flse.include?(key))
+      end
+
+      assert_equal([["unin", "unin"], ["uninc", "uninc"], ["unind", "unind"],
+                    ["unindd", "unindd"], ["uninde", "uninde"], ["unindew", "unindew"],
+                    ["unindex", "unindex"], ["unindey", "unindey"], ["unindf", "unindf"],
+                    ["unine", "unine"]], crit.entries)
       
-      p crit.get_all
-      p crit.get_all("uni")
+=begin
       p crit.keys
       p crit.values
       p crit.values("unin")
       crit.clear
       p crit.values
+=end
 
     end
     
