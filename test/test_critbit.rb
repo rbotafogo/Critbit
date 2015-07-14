@@ -40,6 +40,63 @@ class CritbitTest < Test::Unit::TestCase
     #
     #-------------------------------------------------------------------------------------
 
+    should "create Critbit from array notation" do
+
+      # Associates "a" to 1, "b" to 2, etc...
+      crit = Critbit["a", 1, "b", 2, "c", 3, "d", 4]
+
+      # Critbit will have the same contente as the given hash
+      crit2 = Critbit["a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5]
+
+      # Create a Cribit from another Critbit, this will do a copy
+      crit3 = Critbit[crit]
+
+      # Uses the given associations
+      crit4 = Critbit[[["a", 1], ["b", 2], ["c", 3], ["d", 4], ["e", 5], ["f", 6]]]
+
+      # This is an error... ["f"] is an illegal argumento to a Critbit
+      assert_raise ( RuntimeError ) { Critbit[[["a", 1], ["b", 2], ["c", 3], ["d", 4],
+                                               ["e", 5], ["f"]]] }
+      # This is an error, since there are only 3 elements on the given array.
+      assert_raise ( RuntimeError ) { Critbit["a", 1, 2] }
+      
+    end
+
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
+    should "return enumerator from each without block" do
+
+      crit = Critbit.new
+
+      # crit is space efficient and stores prefixes only once and can be used to
+      # find only strings that match a certain prefix
+      items = ["u", "un", "unine", "uni", "unindd", "unj", "unim", "unin", "unio",
+               "uninde", "uninc", "unind", "unh",  "unindf",
+               "unindew", "unindex", "unindey", "a", "z"]
+
+      # add items to the container
+      items.each do |item|
+        crit[item] = item
+      end
+
+      # Enumerator
+      e = crit.each
+      assert_equal("a", e.next[0])
+      assert_equal("u", e.next[0])
+
+      # Enumerator with prefix
+      e = crit.each("unind")
+      assert_equal("unind", e.next[0])
+      assert_equal("unindd", e.next[0])
+      
+    end
+  
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
     should "create critbit with default values" do
 
       # Create a new Critbit with a default_proc.  Default proc is called whenever a

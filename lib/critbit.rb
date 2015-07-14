@@ -139,9 +139,87 @@ class Critbit
   attr_reader :default_proc
   attr_reader :prefix
   
+  # Critbit[ key, value, ... ] → new_hash
+  #
+  # Critbit[ [ [key, value], ... ] ] → new_hash
+  #
+  # Critbit[ object ] → new_hash
+  #
+  # Creates a new critbit populated with the given objects.
+  #
+  # Similar to the literal hash { key => value, ... }. In the first form, keys and values
+  # occur in pairs, so there must be an even number of arguments.
+  # 
+  # The second and third form take a single argument which is either an array of
+  # key-value pairs or an object convertible to a hash.
+  #
+  # @param args [Args] list of arguments in any of the above formats
+  # @return a new Critbit
+
+  def self.[](*args)
+
+    crit = Critbit.new
+    
+    if args.size == 1
+      
+      if ((args[0].is_a? Hash) || (args[0].is_a? Critbit))
+        args[0].each do |k, v|
+          crit[k] = v
+        end
+      elsif (args[0].is_a? Array)
+        args[0].each do |key_pair|
+          if ((key_pair.is_a? Array) && (key_pair.size == 2))
+            crit[key_pair[0]] = key_pair[1]
+          else
+            raise "Illegal argument for Critbit #{key_pair}"
+          end
+        end
+      else
+        raise "illegal argument for Critbit"
+      end
+      
+      return crit
+      
+    end
+    
+    if (args.size % 2 != 0)
+      raise "odd number of arguments for Critbit"
+    else
+      i = 0
+      begin
+        crit[args[i]] = args[i+1]
+        i += 2
+      end while i < args.size
+    end
+
+    return crit
+    
+  end
+  
   #------------------------------------------------------------------------------------
   #
   #------------------------------------------------------------------------------------
+
+  def self.try_convert(arg)
+    
+  end
+  
+  # new → new_critbit
+  #
+  # new(obj) → new_critbit
+  #
+  # new {|critbit, key| block } → new_critbit
+  #
+  # Returns a new, empty critbit. If this critbit is subsequently accessed by a key
+  # that doesn’t correspond to a critbit entry, the value returned depends on the
+  # style of new used to create the critbit. In the first form, the access returns
+  # nil. If obj is specified, this single object will be used for all default values.
+  # If a block is specified, it will be called with the critbit object and the key,
+  # and should return the default value. It is the block’s responsibility to store
+  # the value in the critbit if required.
+  # @param default [Default] the default return value if the key is not found
+  # @param block [Block] the default block to be executed if key is not found
+  # @return a new critbit
   
   def initialize(default = nil, &block)
     @default = default
@@ -149,10 +227,12 @@ class Critbit
     @prefix = nil
     @java_critbit =  MCritBitTree.new(StringKeyAnalyzer.new)
   end
-  
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+
+  # Element Reference—Retrieves the value object corresponding to the key object. If
+  # not found, returns the default value (see Hash::new for details).
+  # @param key (key) the key to be retrieved
+  # @return the value reference by this key or the default value or result of executing
+  # the default_proc
 
   def[](key)
     
@@ -165,50 +245,53 @@ class Critbit
     
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Associates the value given by value with the key given by key.
+  # @param key [Key] the key element
+  # @param val [Value] the value associated with the key
+  # @return the value associated with the key
 
   def[]=(key, val)
     key = key.to_s if key.is_a? Symbol
     @java_critbit.put(key, val)
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Searches through the critbit comparing obj with the key using ==. Returns the
+  # key-value pair (two elements array) or nil if no match is found. See
+  # Array#assoc.
+  # @param key [Key] the key to search for
+  # @return Array with two elements [key, value]
 
   def assoc(key)
     [key, fetch(key)]
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Removes all key-value pairs from critbit
 
   def clear
     @java_critbit.clear
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Returns the default value, the value that would be returned by critbit if key did
+  # not exist in critbit. See also Critbit::new and Critbit#default=
+  # @param val [Value] the default value to return
 
   def default=(val)
     @default = val
   end
   
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Sets the default proc to be executed on each failed key lookup.
+  # @param proc [Proc] the Proc to set as default_proc
 
   def default_proc=(proc)
     @default_proc = proc
   end
   
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Deletes the key-value pair and returns the value from critbit whose key is equal to
+  # key. If the key is not found, returns the default value. If the optional code block
+  # is given and the key is not found, pass in the key and return the result of block.
+  # @param key [Key]
+  # @return the value, the default value, or the result of applying the default block
+  # to key
 
   def delete(key)
 
@@ -228,9 +311,22 @@ class Critbit
   #
   #------------------------------------------------------------------------------------
 
+  def delete_if(key)
+
+  end
+  
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+
   def each(prefix = nil, &block)
-    cursor = EachCursor.new(&block)
-    _get(cursor, prefix)
+    if block_given?
+      cursor = EachCursor.new(&block)
+      _get(cursor, prefix)
+    else
+      to_enum(:each, prefix)
+    end
+    
   end
     
   #------------------------------------------------------------------------------------
