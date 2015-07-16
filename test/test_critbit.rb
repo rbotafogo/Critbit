@@ -66,6 +66,47 @@ class CritbitTest < Test::Unit::TestCase
     #
     #-------------------------------------------------------------------------------------
 
+    should "delete_if block is true" do
+
+      crit = Critbit.new
+
+      # crit is space efficient and stores prefixes only once and can be used to
+      # find only strings that match a certain prefix
+      items = ["u", "un", "unine", "uni", "unindd", "unj", "unim", "unin", "unio",
+               "uninde", "uninc", "unind", "unh",  "unindf",
+               "unindew", "unindex", "unindey", "a", "z"]
+
+      # add items to the container
+      items.each do |item|
+        crit[item] = item
+      end
+
+      # remove all elements with key > "unind"
+      crit.delete_if { |key, val| key > "unind" }
+
+      # those are the elements left
+      ok = ["u", "un", "uni", "unim", "unin", "unind", "unh",  "a"]
+      
+      ok.each do |item|
+        assert_equal(true, crit.has_key?(item))
+      end
+      
+      # add the items to the container again
+      items.each do |item|
+        crit[item] = item
+      end
+
+      crit.delete_if { |key, val| val > "unind" }
+      ok.each do |item|
+        assert_equal(true, crit.has_key?(item))
+      end
+
+    end
+    
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
     should "return enumerator from each without block" do
 
       crit = Critbit.new
@@ -135,12 +176,18 @@ class CritbitTest < Test::Unit::TestCase
       assert_equal(1, crit["there"])
       assert_equal(100, crit["Essa é uma frase para armazenar"])
 
+      # fetch the key from crit
+      assert_equal(0, crit.fetch("hello"))
+
       # remove a key, value pair from crit.  Given the key it will return the value and
       # remove the entry
       assert_equal(0, crit.delete("hello"))
       assert_equal(3, crit.size)
       assert_equal(nil, crit["hello"])
       crit.delete("not there") { |k| p "#{k} is not there" }
+
+      assert_raise ( KeyError ) { crit.fetch("hello") }
+      assert_equal("NotFound", crit.fetch("hello", "NotFound"))
 
       # crit also accepts complex objects
       crit["works?"] = [10, 20, 30]
@@ -199,7 +246,7 @@ class CritbitTest < Test::Unit::TestCase
 
       # Those are not prefixed by unin
       flse = ["u", "un", "unh", "uni", "unj", "unim", "unio", "a", "z"]
-      crit.each("unin") do |key, value|
+      crit.each_pair("unin") do |key, value|
         assert_equal(false, flse.include?(key))
       end
 

@@ -24,106 +24,6 @@
 require 'java'
 require_relative 'env'
 
-class Decision
-  include org.ardverk.collection.Cursor
-
-end
-
-##########################################################################################
-#
-##########################################################################################
-
-class EachCursor
-  include org.ardverk.collection.Cursor
-
-  attr_reader :key
-  attr_reader :value
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-
-  def initialize(&block)
-    @block = block
-  end
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-  
-  def select(entry)
-    @block.call(entry.getKey(), entry.getValue())
-    Decision::CONTINUE
-  end
-  
-end
-
-##########################################################################################
-#
-##########################################################################################
-
-class EntryListsCursor
-  include org.ardverk.collection.Cursor
-
-  attr_reader :klist
-  attr_reader :vlist
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-
-  def initialize
-    @klist = Array.new
-    @vlist = Array.new
-  end
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-  
-  def select(entry)
-    @klist << entry.getKey()
-    @vlist << entry.getValue()
-    Decision::CONTINUE
-  end
-  
-end
-
-##########################################################################################
-#
-##########################################################################################
-
-class ListCursor
-  include org.ardverk.collection.Cursor
-
-  attr_reader :list
-  attr_reader :type
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-
-  def initialize(type)
-
-    if (type != :key && type != :value)
-      raise "Illegal type #{type}"
-    end
-    
-    @type = type
-    @list = Array.new
-    
-  end
-
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
-
-  def select(entry)
-    @list << ((@type == :key)? entry.getKey() : entry.getValue())
-    Decision::CONTINUE
-  end
-  
-end
-
 
 ##########################################################################################
 #
@@ -236,7 +136,7 @@ class Critbit
 
   def[](key)
     
-    val = fetch(key)
+    val = retrieve(key)
     if (val == nil)
       val = @default
       val = @default_proc.call(self, key, val) if @default_proc
@@ -262,7 +162,7 @@ class Critbit
   # @return Array with two elements [key, value]
 
   def assoc(key)
-    [key, fetch(key)]
+    [key, retrieve(key)]
   end
 
   # Removes all key-value pairs from critbit
@@ -307,40 +207,102 @@ class Critbit
     
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Deletes every key-value pair from hsh for which block evaluates to true.
+  # 
+  # If no block is given, an enumerator is returned instead.
 
-  def delete_if(key)
-
+  def delete_if(prefix = nil, &block)
+    
+    if block_given?
+      cursor = Critbit::DeleteCursor.new(self, &block)
+      _get(cursor, prefix)
+    else
+      to_enum(:each, prefix)
+    end
   end
-  
-  #------------------------------------------------------------------------------------
+    
+  # Calls block once for each key in critbit, passing the key-value pair as parameters.
   #
-  #------------------------------------------------------------------------------------
+  # If no block is given, an enumerator is returned instead.
 
   def each(prefix = nil, &block)
+    
     if block_given?
-      cursor = EachCursor.new(&block)
+      cursor = Critbit::EachCursor.new(&block)
       _get(cursor, prefix)
     else
       to_enum(:each, prefix)
     end
     
   end
-    
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
 
-  def fetch(key)
-    key = key.to_s if key.is_a? Symbol
-    @java_critbit.get(key)
+  alias each_pair :each
+
+  
+  # Calls block once for each key in critbit, passing the key as a parameter.
+  #
+  # If no block is given, an enumerator is returned instead.
+                     
+  def each_key(prefix = nil, &block)
+    
+    if block_given?
+      cursor = Critbit::EachKeyCursor.new(&block)
+      _get(cursor, prefix)
+    else
+      to_enum(:each, prefix)
+    end
+
   end
 
-  #------------------------------------------------------------------------------------
+  # Calls block once for each value in critbit, passing the value as a parameter.
   #
-  #------------------------------------------------------------------------------------
+  # If no block is given, an enumerator is returned instead.
+                     
+  def each_value(prefix = nil, &block)
+    
+    if block_given?
+      cursor = Critbit::EachValueCursor.new(&block)
+      _get(cursor, prefix)
+    else
+      to_enum(:each, prefix)
+    end
+
+  end
+
+  # Returns true if critbit contains no key-value pairs.
+  
+  def empty?
+    @size == 0
+  end
+
+  def eql?(other)
+
+  end
+  
+  # Returns a value from the critbit for the given key. If the key can’t be found,
+  # there are several options: With no other arguments, it will raise an KeyError exception;
+  # if default is given, then that will be returned; if the optional code block is
+  # specified, then that will be run and its result returned.
+
+  def fetch(key, default = nil, &block)
+    
+    key = key.to_s if key.is_a? Symbol
+    res = @java_critbit.get(key)
+
+    if (res == nil)
+      if (default != nil)
+        return default
+      elsif (block_given?)
+        block.call(key)
+      else
+        raise KeyError, "key '#{key}' not found"
+      end
+    end
+    res
+    
+  end
+
+  # Returns true if the given key is present in critbit
 
   def has_key?(key)
     @java_critbit.containsKey(key)
@@ -359,7 +321,7 @@ class Critbit
   #------------------------------------------------------------------------------------
 
   def keys(prefix = nil)
-    cursor = ListCursor.new(:key)
+    cursor = Critbit::ListCursor.new(:key)
     _get(cursor, prefix).list
   end
   
@@ -384,11 +346,9 @@ class Critbit
   #------------------------------------------------------------------------------------
 
   def values(prefix = nil)
-    cursor = ListCursor.new(:value)
+    cursor = Critbit::ListCursor.new(:value)
     _get(cursor, prefix).list
   end
-
-
   
   #------------------------------------------------------------------------------------
   #
@@ -422,6 +382,15 @@ class Critbit
   #
   #------------------------------------------------------------------------------------
 
+  def retrieve(key)
+    key = key.to_s if key.is_a? Symbol
+    @java_critbit.get(key)
+  end
+  
+  #------------------------------------------------------------------------------------
+  #
+  #------------------------------------------------------------------------------------
+
   def _get(cursor, prefix = nil)
     prefix ||= @prefix
     (prefix)? @java_critbit.traverseWithPrefix(prefix, cursor) :
@@ -429,4 +398,136 @@ class Critbit
     cursor
   end
 
+  ##########################################################################################
+  #
+  ##########################################################################################
+
+  class Cursor
+    include org.ardverk.collection.Cursor
+    
+    attr_reader :key
+    attr_reader :value
+
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def initialize(&block)
+      @block = block
+    end
+
+  end
+
+  ##########################################################################################
+  #
+  ##########################################################################################
+  
+  class EachCursor < Cursor
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def select(entry)
+      @block.call(entry.getKey(), entry.getValue())
+      Decision::CONTINUE
+    end
+    
+  end
+
+  ##########################################################################################
+  #
+  ##########################################################################################
+  
+  class EachKeyCursor < Cursor
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def select(entry)
+      @block.call(entry.getKey())
+      Decision::CONTINUE
+    end
+    
+  end
+
+  ##########################################################################################
+  #
+  ##########################################################################################
+  
+  class EachValueCursor < Cursor
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def select(entry)
+      @block.call(entry.getValue())
+      Decision::CONTINUE
+    end
+    
+  end
+  
+  ##########################################################################################
+  #
+  ##########################################################################################
+  
+  class DeleteCursor < Cursor
+
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def initialize(critbit, &block)
+      @critbit = critbit
+      super(&block)
+    end
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def select(entry)
+      @critbit.delete(entry.getKey()) if @block.call(entry.getKey(), entry.getValue())
+      Decision::CONTINUE
+    end
+    
+  end
+  
+  ##########################################################################################
+  #
+  ##########################################################################################
+  
+  class ListCursor < Cursor
+    
+    attr_reader :list
+    attr_reader :type
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def initialize(type)
+      
+      if (type != :key && type != :value)
+        raise "Illegal type #{type}"
+      end
+      
+      @type = type
+      @list = Array.new
+      
+    end
+    
+    #------------------------------------------------------------------------------------
+    #
+    #------------------------------------------------------------------------------------
+    
+    def select(entry)
+      @list << ((@type == :key)? entry.getKey() : entry.getValue())
+      Decision::CONTINUE
+    end
+    
+  end
+  
 end
