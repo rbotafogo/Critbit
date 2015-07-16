@@ -275,8 +275,39 @@ class Critbit
     @size == 0
   end
 
+  
   def eql?(other)
 
+    cr1 = each
+    cr2 = other.each
+    
+    begin
+      p1 = cr1.next
+      p2 = cr2.next
+      if ((p1[0] != p2[0]) || (p1[1] != p2[1]))
+        return false
+      end
+    rescue StopIteration
+      break
+    end while true
+
+    i = 0
+    begin
+      cr1.next
+    rescue StopIteration
+      i += 1
+    end
+
+    begin
+      cr2.next
+    rescue StopIteration
+      i += 1
+    end
+
+    return false if i != 2
+    
+    return true
+    
   end
   
   # Returns a value from the critbit for the given key. If the key can’t be found,

@@ -288,6 +288,64 @@ class CritbitTest < Test::Unit::TestCase
 
     end
     
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
+    should "compare two critbits" do
+
+      crit = Critbit.new
+
+      # crit is space efficient and stores prefixes only once and can be used to
+      # find only strings that match a certain prefix
+      items = ["u", "un", "unh", "uni", "unj", "unim", "unin", "unio",
+               "uninc", "unind", "unine", "unindd", "uninde", "unindf",
+               "unindew", "unindex", "unindey", "a", "z"]
+
+      # add items to the container
+      items.each do |item|
+        crit[item] = item
+      end
+
+      # Create a second critbit with the same content as crit
+      crit2 = Critbit[crit]
+      # they have the same elements
+      assert_equal(true, crit.eql?(crit2))
+
+      # If the prefix is set on a critbit, only keys with the given prefix will be
+      # checkd and eql? will return false
+      crit.prefix = "u"
+      assert_equal(false, crit.eql?(crit2))
+
+      # again both crit and crit2 are equal
+      crit2.prefix = "u"
+      assert_equal(true, crit.eql?(crit2))
+
+      # remove the crit prefix
+      crit.prefix = nil
+
+      # create crit3 that is different from crit
+      crit3 = Critbit.new
+      it2 = ["u", "un", "unh", "uni", "unj", "unim", "unin", "unio",
+             "uninc", "unind", "unine", "unindd", "uninde", "unindf",
+             "unindew", "unindex", "unindey"]
+
+      # add items to the container
+      it2.each do |item|
+        crit3[item] = item
+      end
+
+      # crit and crit3 are not eql?
+      assert_equal(false, crit.eql?(crit2))
+      assert_equal(false, crit2.eql?(crit))
+
+      # but crit3 is a subset of crit with only prefix "u", so now crit and crit3
+      # are eql?
+      crit.prefix = "u"
+      assert_equal(true, crit.eql?(crit3))
+      
+    end
+
   end
 
 end
