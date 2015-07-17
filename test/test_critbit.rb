@@ -211,6 +211,9 @@ class CritbitTest < Test::Unit::TestCase
       assert_equal([["Essa \u00E9 uma frase para armazenar", 100], ["essa", 10],
                     ["there", 1], ["works?", [10, 20, 30]]], crit.entries)
 
+      p crit.flatten
+      p crit.inspect
+
     end
 
     #-------------------------------------------------------------------------------------

@@ -155,6 +155,8 @@ class Critbit
     @java_critbit.put(key, val)
   end
 
+  alias store :[]=
+  
   # Searches through the critbit comparing obj with the key using ==. Returns the
   # key-value pair (two elements array) or nil if no match is found. See
   # Array#assoc.
@@ -333,23 +335,85 @@ class Critbit
     
   end
 
+  # Returns a new array that is a one-dimensional flattening of this critbit. That is, for
+  # every key or value that is an array, extract its elements into the new array.  The
+  # optional level argument determines the level of recursion to flatten if the value is
+  # a hash.  If value is an Array it will call array.flatten
+  
+  def flatten(level = nil)
+
+    res = Array.new
+    each do |key, value|
+      res << key
+      case value
+      when (Array || Hash || Critbit)
+        (level)? res.concat(value.flatten(level)) : res.concat(value.flatten)
+      else
+        (value.respond_to?(:flatten))? res << value.flatten : res << value
+      end
+    end
+    res
+    
+  end
+  
   # Returns true if the given key is present in critbit
 
   def has_key?(key)
     @java_critbit.containsKey(key)
   end
+
+  # Returns true if the given key is present in critbit. Identical to has_key?
+
+  alias include? :has_key?
+  alias member? :has_key?
   
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Returns true if the given value is present for some key in critbit.
 
   def has_value?(val)
     @java_critbit.containsValue(val)
   end
 
-  #------------------------------------------------------------------------------------
-  #
-  #------------------------------------------------------------------------------------
+  # Return the contents of this critbit as a string.
+  
+  def inspect
+    res = "{"
+    each do |key, value|
+      res << "\"#{key}\"=>#{value},"
+    end
+    res[-1] = "}"
+    res
+  end
+
+  # Return the contents of this critbit as a string.
+
+  alias to_s :inspect
+
+  # Returns a new critbit created by using critbit’s values as keys, and the keys as
+  # values.
+  
+  def invert
+    
+    crit = Critbit.new
+    each do |key, value|
+      crit[value.to_s] = key
+    end
+    crit
+    
+  end
+  
+  # Returns the key of an occurrence of a given value. If the value is not found,
+  # returns nil.
+
+  def key(val)
+    
+    each do |key, value|
+      return key if (value == val)
+    end
+    return nil
+    
+  end
+
+  # Returns a new array populated with the keys from this critbit
 
   def keys(prefix = nil)
     cursor = Critbit::ListCursor.new(:key)
@@ -372,6 +436,8 @@ class Critbit
     @java_critbit.size()
   end
 
+  alias length :size
+  
   #------------------------------------------------------------------------------------
   #
   #------------------------------------------------------------------------------------
