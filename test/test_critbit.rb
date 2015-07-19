@@ -107,6 +107,38 @@ class CritbitTest < Test::Unit::TestCase
     #
     #-------------------------------------------------------------------------------------
 
+    should "keep_if block is true" do
+
+      crit = Critbit.new
+
+      # crit is space efficient and stores prefixes only once and can be used to
+      # find only strings that match a certain prefix
+      items = ["u", "un", "unine", "uni", "unindd", "unj", "unim", "unin", "unio",
+               "uninde", "uninc", "unind", "unh",  "unindf",
+               "unindew", "unindex", "unindey", "a", "z"]
+
+      # add items to the container
+      items.each do |item|
+        crit[item] = item
+      end
+
+      # remove all elements with key > "unind"
+      crit.keep_if { |key, val| key > "unind" }
+      
+      # those are the elements left
+      ok = ["unindd", "uninde", "unindf", "unine", "unio", "unindew", "unindex", "unj",
+            "unindey", "z" ]
+      
+      ok.each do |item|
+        assert_equal(true, crit.has_key?(item))
+      end
+      
+    end
+
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
     should "return enumerator from each without block" do
 
       crit = Critbit.new
@@ -131,9 +163,46 @@ class CritbitTest < Test::Unit::TestCase
       e = crit.each("unind")
       assert_equal("unind", e.next[0])
       assert_equal("unindd", e.next[0])
-      
+
     end
   
+    #-------------------------------------------------------------------------------------
+    #
+    #-------------------------------------------------------------------------------------
+
+    should "merge critbits" do
+
+      
+      
+      h1 = Critbit["a" => 100, "b" => 200]
+      h2 = Critbit["b" => 254, "c" => 300]
+      h3 = Critbit["b" => 100, "d" => 1001, "e" => 398]
+
+      n = h1.merge(h2)   #=> {"a"=>100, "b"=>254, "c"=>300}
+      n = h1.merge(h2){|key, oldval, newval| newval - oldval} #=> {"a"=>100, "b"=>54,  "c"=>300}
+
+      h1.merge!(h2)
+      p h1
+      p h1.rassoc(254)
+      p h1.rassoc(300)
+      p h1.rassoc(1000)
+
+      h1.merge!(h2) { |key, oldval, newval| newval - oldval }
+      p h1
+
+      # put_all is similar to merge, but should be significantly faster than merge for
+      # larger critbits and it does not allow any control for duplicate keys.  If there
+      # are duplicate keys, then the value of the second critbit will be kept.
+      h1.put_all(h3)
+      p h1
+
+      p h1.remove("a")
+      p h1.remove("z")
+      p h1
+      
+
+    end
+    
     #-------------------------------------------------------------------------------------
     #
     #-------------------------------------------------------------------------------------
@@ -211,9 +280,11 @@ class CritbitTest < Test::Unit::TestCase
       assert_equal([["Essa \u00E9 uma frase para armazenar", 100], ["essa", 10],
                     ["there", 1], ["works?", [10, 20, 30]]], crit.entries)
 
-      p crit.flatten
-      p crit.inspect
-
+      # it is possible to change a value for a given key
+      crit["essa"] = 20
+      assert_equal([["Essa \u00E9 uma frase para armazenar", 100], ["essa", 20],
+                    ["there", 1], ["works?", [10, 20, 30]]], crit.entries)
+      
     end
 
     #-------------------------------------------------------------------------------------
@@ -235,6 +306,32 @@ class CritbitTest < Test::Unit::TestCase
         crit[item] = item
       end
 
+
+      # Does each for all elements in the container
+      print "["
+      crit.each do |key, value|
+        print "[#{key}, #{value}] "
+      end
+      print "]"
+
+      p ""
+      # Does each for all elements in the critbit
+      print "["
+      crit.each("unin") do |key, value|
+        print "[#{key}, #{value}] "
+      end
+      print "]"
+
+      p ""
+      crit.prefix = "unin"
+      # Does each for all elements in the critbit
+      print "["
+      crit.each do |key, value|
+        print "[#{key}, #{value}] "
+      end
+      print "]"
+      
+      
       # Does each for all elements in the container
       crit.each do |key, value|
         assert_equal(value, crit[key])

@@ -216,12 +216,15 @@ class Critbit
   def delete_if(prefix = nil, &block)
     
     if block_given?
-      cursor = Critbit::DeleteCursor.new(self, &block)
+      cursor = Critbit::DeleteCursor.new(self, true, &block)
       _get(cursor, prefix)
     else
       to_enum(:each, prefix)
     end
+    
   end
+
+  alias reject! :delete_if
     
   # Calls block once for each key in critbit, passing the key-value pair as parameters.
   #
@@ -366,6 +369,7 @@ class Critbit
 
   alias include? :has_key?
   alias member? :has_key?
+  alias key? :has_key?
   
   # Returns true if the given value is present for some key in critbit.
 
@@ -376,12 +380,14 @@ class Critbit
   # Return the contents of this critbit as a string.
   
   def inspect
+    
     res = "{"
     each do |key, value|
       res << "\"#{key}\"=>#{value},"
     end
     res[-1] = "}"
     res
+    
   end
 
   # Return the contents of this critbit as a string.
@@ -400,6 +406,21 @@ class Critbit
     crit
     
   end
+
+  # Deletes every key-value pair from critbit for which block evaluates to false.
+  
+  def keep_if(prefix = nil, &block)
+
+    if block_given?
+      cursor = Critbit::DeleteCursor.new(self, false, &block)
+      _get(cursor, prefix)
+    else
+      to_enum(:each, prefix)
+    end
+    
+  end
+
+  alias select! :keep_if
   
   # Returns the key of an occurrence of a given value. If the value is not found,
   # returns nil.
@@ -419,7 +440,52 @@ class Critbit
     cursor = Critbit::ListCursor.new(:key)
     _get(cursor, prefix).list
   end
+
+  # Returns a new critbit containing the contents of other_critbit and the contents
+  # of critbit. If no block is specified, the value for entries with duplicate keys will be
+  # that of other_critbit. Otherwise the value for each duplicate key is determined by
+  # calling the block with the key, its value in critbit and its value in other_critbit.
+
+  def merge(other_critbit, &block)
+
+    crit = Critbit[self]
+    if (block_given?)
+      other_critbit.each do |key, value|
+        value = block.call(key, self[key], value) if has_key?(key)
+        crit[key] = value
+      end
+    else
+      other_critbit.each do |key, value|
+        crit[key] = value
+      end
+    end
+    crit
+      
+  end
+
+  alias update :merge
   
+  # Returns a new critbit containing the contents of other_critbit and the contents
+  # of critbit. If no block is specified, the value for entries with duplicate keys will be
+  # that of other_critbit. Otherwise the value for each duplicate key is determined by
+  # calling the block with the key, its value in critbit and its value in other_critbit.
+
+  def merge!(other_critbit, &block)
+
+    if (block_given?)
+      other_critbit.each do |key, value|
+        value = block.call(key, self[key], value) if has_key?(key)
+        self[key] = value
+      end
+    else
+      other_critbit.each do |key, value|
+        self[key] = value
+      end
+    end
+    self
+      
+  end
+
   #------------------------------------------------------------------------------------
   #
   #------------------------------------------------------------------------------------
@@ -428,6 +494,18 @@ class Critbit
     @prefix = pre
   end
   
+  # Searches through the critbit comparing obj with the value using ==. Returns the first
+  # key-value pair (two-element array) that matches. See also Array#rassoc.
+
+  def rassoc(obj)
+
+    each do |key, value|
+      return [key, value] if obj == value
+    end
+    nil
+    
+  end
+
   #------------------------------------------------------------------------------------
   #
   #------------------------------------------------------------------------------------
@@ -468,7 +546,23 @@ class Critbit
   def max
     @java_critbit.max
   end
-      
+
+  #------------------------------------------------------------------------------------
+  # Merges the two critbits. Should be significantly faster than method merge.
+  #------------------------------------------------------------------------------------
+
+  def put_all(other_critbit)
+    @java_critbit.putAll(other_critbit.java_critbit)
+  end
+  
+  #------------------------------------------------------------------------------------
+  # Removes the key value pair from the critbit.  If no key is found, nil is returned.
+  #------------------------------------------------------------------------------------
+
+  def remove(key)
+    @java_critbit.remove(key)
+  end
+  
   #------------------------------------------------------------------------------------
   #
   #------------------------------------------------------------------------------------
@@ -576,8 +670,9 @@ class Critbit
     #
     #------------------------------------------------------------------------------------
     
-    def initialize(critbit, &block)
+    def initialize(critbit, t_val = true, &block)
       @critbit = critbit
+      @t_val = t_val
       super(&block)
     end
     
@@ -586,12 +681,13 @@ class Critbit
     #------------------------------------------------------------------------------------
     
     def select(entry)
-      @critbit.delete(entry.getKey()) if @block.call(entry.getKey(), entry.getValue())
+      @critbit.delete(entry.getKey()) if (@block.call(entry.getKey(),
+                                                      entry.getValue()) == @t_val)
       Decision::CONTINUE
     end
     
   end
-  
+
   ##########################################################################################
   #
   ##########################################################################################

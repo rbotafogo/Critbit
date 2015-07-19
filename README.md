@@ -66,9 +66,10 @@ AVL tree, but your operations will be simpler and faster if you use a crit-bit t
 Critbit Interface
 =================
 
-This version of Critbit implements a subset of Ruby's Hash interface and will evolve to
-implement the whole Hash interface.  Besides implementing the Hash interface it also provides
-features for searching for keys that have a common prefix.
+This version of Critbit implements a very similar interface as the Hash interface with minor
+modifications when it makes sense to do so.  Besides implementing the Hash interface it also
+provides features for searching for keys that have a common prefix that are not possible
+with hashes.
 
 Here is an example of using Critbit:
 
@@ -85,21 +86,47 @@ Here is an example of using Critbit:
         crit[item] = item
       end
 
-      # Does each for all elements in the container
+      # Does each for all elements in the critbit
+      print "["
       crit.each do |key, value|
-         p "Key: crit[key], value: #{value}"
+        print "[#{key}, #{value}] "
       end
+      print "]"
 
 Prints:
 
+      [[a, a] [u, u] [un, un] [unh, unh] [uni, uni] [unim, unim] [unin, unin] [uninc, uninc]
+      [unind, unind] [unindd, unindd] [uninde, uninde] [unindew, unindew] [unindex, unindex]
+      [unindey, unindey] [unindf, unindf] [unine, unine] [unio, unio] [unj, unj] [z, z] ].
 
+Observe that all elements are printed in sorted order, this is because critbit is
+naturally sorted.  This is one of the benefits of critbit over hashes.
 
-      # Each can also filter by prefix.  Let's try prefix unin
-      pre = ["unin", "uninc", "unind", "unine", "unindd", "uninde", "unindf",
-             "unindew", "unindex", "unindey"]
+Critbits also allow for doing prefix traversal. In the next code example the critbit is
+traversed by only selecting strings that have "unin" as prefix, by passing the prefix as
+argument to 'each':
+
+      # Does each for all elements in the critbit
+      print "["
       crit.each("unin") do |key, value|
-        assert_equal(true, pre.include?(key))
+        print "[#{key}, #{value}] "
       end
+      print "]"
+
+      [[unin, unin] [uninc, uninc] [unind, unind] [unindd, unindd] [uninde, uninde]
+       [unindew, unindew] [unindex, unindex] [unindey, unindey] [unindf, unindf]
+       [unine, unine] ].
+
+A critbit prefix can also be set by using method 'prefix=':
+
+      crit.prefix = "unin"
+
+      # Does each for all elements in the critbit
+      print "["
+      crit.each do |key, value|
+        print "[#{key}, #{value}] "
+      end
+      print "]"
 
 
 Critbit installation and download:
