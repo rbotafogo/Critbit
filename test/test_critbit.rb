@@ -244,7 +244,7 @@ class CritbitTest < Test::Unit::TestCase
       assert_equal(0, crit["hello"])
       assert_equal(1, crit["there"])
       assert_equal(100, crit["Essa é uma frase para armazenar"])
-
+      
       # fetch the key from crit
       assert_equal(0, crit.fetch("hello"))
 

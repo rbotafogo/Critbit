@@ -231,7 +231,7 @@ class Critbit
   # If no block is given, an enumerator is returned instead.
 
   def each(prefix = nil, &block)
-    
+
     if block_given?
       cursor = Critbit::EachCursor.new(&block)
       _get(cursor, prefix)
@@ -386,7 +386,7 @@ class Critbit
       res << "\"#{key}\"=>#{value},"
     end
     res[-1] = "}"
-    res
+    return res
     
   end
 

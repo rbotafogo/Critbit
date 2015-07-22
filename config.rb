@@ -5,14 +5,14 @@ require 'rbconfig'
 ##########################################################################################
 
 # set to true if development environment
-$DVLP = true
+# $DVLP = true
 
 # Set development dependency: those are gems that are also in development and thus not
 # installed in the gem directory.  Need a way of accessing them
-$DVLP_DEPEND=["critbit"]
+# $DVLP_DEPEND=["critbit"]
 
 # Set dependencies from other local gems provided in the vendor directory. 
-$VENDOR_DEPEND=[]
+# $VENDOR_DEPEND=[]
 
 ##########################################################################################
 
