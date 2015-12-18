@@ -1,4 +1,5 @@
 require 'rbconfig'
+require 'bundler/setup'
 
 ##########################################################################################
 # Configuration. Remove setting before publishing Gem.
@@ -8,11 +9,12 @@ require 'rbconfig'
 # $DVLP = true
 
 # Set development dependency: those are gems that are also in development and thus not
-# installed in the gem directory.  Need a way of accessing them
+# installed in the gem directory.  Need a way of accessing them.  Note that we need to
+# add a dependency to the gem itself.
 # $DVLP_DEPEND=["critbit"]
 
 # Set dependencies from other local gems provided in the vendor directory. 
-# $VENDOR_DEPEND=[]
+$VENDOR_DEPEND=[]
 
 ##########################################################################################
 
@@ -79,7 +81,7 @@ end
 # Set the project directories
 #---------------------------------------------------------------------------------------
 
-class CritbitRB
+class Critbit
 
   @home_dir = File.expand_path File.dirname(__FILE__)
 
@@ -87,13 +89,13 @@ class CritbitRB
     attr_reader :home_dir
   end
 
-  @project_dir = CritbitRB.home_dir + "/.."
-  @doc_dir = CritbitRB.home_dir + "/doc"
-  @lib_dir = CritbitRB.home_dir + "/lib"
-  @src_dir = CritbitRB.home_dir + "/src"
-  @target_dir = CritbitRB.home_dir + "/target"
-  @test_dir = CritbitRB.home_dir + "/test"
-  @vendor_dir = CritbitRB.home_dir + "/vendor"
+  @project_dir = Critbit.home_dir + "/.."
+  @doc_dir = Critbit.home_dir + "/doc"
+  @lib_dir = Critbit.home_dir + "/lib"
+  @src_dir = Critbit.home_dir + "/src"
+  @target_dir = Critbit.home_dir + "/target"
+  @test_dir = Critbit.home_dir + "/test"
+  @vendor_dir = Critbit.home_dir + "/vendor"
   
   class << self
     attr_reader :project_dir
@@ -105,13 +107,13 @@ class CritbitRB
     attr_reader :vendor_dir
   end
 
-  @build_dir = CritbitRB.src_dir + "/build"
+  @build_dir = Critbit.src_dir + "/build"
 
   class << self
     attr_reader :build_dir
   end
 
-  @classes_dir = CritbitRB.build_dir + "/classes"
+  @classes_dir = Critbit.build_dir + "/classes"
 
   class << self
     attr_reader :classes_dir
@@ -125,7 +127,7 @@ end
 
 def depend(name)
   
-  dependency_dir = CritbitRB.project_dir + "/" + name
+  dependency_dir = Critbit.project_dir + "/" + name
   mklib(dependency_dir)
   
 end
@@ -145,7 +147,7 @@ if ($DVLP == true)
   #---------------------------------------------------------------------------------------
   
   def depend(name)
-    dependency_dir = CritbitRB.project_dir + "/" + name
+    dependency_dir = Critbit.project_dir + "/" + name
     mklib(dependency_dir)
   end
 
@@ -165,7 +167,7 @@ if ($DVLP == true)
     
     SimpleCov.start do
       @filters = []
-      add_group "CritbitRB", "lib/mdarray"
+      add_group "Critbit"
     end
     
   end

@@ -149,5 +149,5 @@ Contributors are welcome.
 Critbit History:
 ================
 
-  + 05/04/2013: Version 0.5.0 – Initial release.
+  + 22/07/2015: Version 0.5.0 – Initial release.
 

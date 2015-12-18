@@ -45,7 +45,7 @@ class CritbitTest < Test::Unit::TestCase
       # Associates "a" to 1, "b" to 2, etc...
       crit = Critbit["a", 1, "b", 2, "c", 3, "d", 4]
 
-      # Critbit will have the same contente as the given hash
+      # Critbit will have the same content as the given hash
       crit2 = Critbit["a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5]
 
       # Create a Cribit from another Critbit, this will do a copy
@@ -322,7 +322,7 @@ class CritbitTest < Test::Unit::TestCase
       end
       print "]"
 
-      p ""
+      p "unin"
       crit.prefix = "unin"
       # Does each for all elements in the critbit
       print "["
