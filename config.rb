@@ -1,20 +1,17 @@
 require 'rbconfig'
-require 'bundler/setup'
+require 'java'
 
-##########################################################################################
-# Configuration. Remove setting before publishing Gem.
-##########################################################################################
+#
+# In principle should not be in this file.  The right way of doing this is by executing
+# bundler exec, but I don't know how to do this from inside emacs.  So, should comment
+# the next line before publishing the GEM.  If not commented, this should be harmless
+# anyway.
+#
 
-# set to true if development environment
-# $DVLP = true
-
-# Set development dependency: those are gems that are also in development and thus not
-# installed in the gem directory.  Need a way of accessing them.  Note that we need to
-# add a dependency to the gem itself.
-# $DVLP_DEPEND=["critbit"]
-
-# Set dependencies from other local gems provided in the vendor directory. 
-$VENDOR_DEPEND=[]
+begin
+  require 'bundler/setup'
+rescue LoadError
+end
 
 ##########################################################################################
 
@@ -34,48 +31,6 @@ $VENDOR_DEPEND=[]
     end
   else 'default'
   end
-
-#---------------------------------------------------------------------------------------
-# Add path to load path
-#---------------------------------------------------------------------------------------
-
-def mklib(path, home_path = true)
-  
-  if (home_path)
-    lib = path + "/lib"
-  else
-    lib = path
-  end
-  
-  $LOAD_PATH.insert(0, lib)
-
-end
-
-##########################################################################################
-# Prepare environment to work inside Cygwin
-##########################################################################################
-
-if @platform == 'windows-cygwin'
-  
-  #---------------------------------------------------------------------------------------
-  # Return the cygpath of a path
-  #---------------------------------------------------------------------------------------
-  
-  def set_path(path)
-    `cygpath -a -p -m #{path}`.tr("\n", "")
-  end
-  
-else
-  
-  #---------------------------------------------------------------------------------------
-  # Return  the path
-  #---------------------------------------------------------------------------------------
-  
-  def set_path(path)
-    path
-  end
-  
-end
 
 #---------------------------------------------------------------------------------------
 # Set the project directories
@@ -121,55 +76,29 @@ class Critbit
 
 end
 
-#---------------------------------------------------------------------------------------
-# Set dependencies
-#---------------------------------------------------------------------------------------
+#----------------------------------------------------------------------------------------
+# If we need to test for coverage
+#----------------------------------------------------------------------------------------
 
-def depend(name)
+if $COVERAGE == 'true'
   
-  dependency_dir = Critbit.project_dir + "/" + name
-  mklib(dependency_dir)
+  require 'simplecov'
+  
+  SimpleCov.start do
+    @filters = []
+    add_group "Critbit"
+  end
   
 end
 
-$VENDOR_DEPEND.each do |dep|
-  vendor_depend(dep)
-end if $VENDOR_DEPEND
-
 ##########################################################################################
-# Config gem
+# Load necessary jar files
 ##########################################################################################
 
-if ($DVLP == true)
+Dir["#{Critbit.vendor_dir}/*.jar"].each do |jar|
+  require jar
+end
 
-  #---------------------------------------------------------------------------------------
-  # Set development dependencies
-  #---------------------------------------------------------------------------------------
-  
-  def depend(name)
-    dependency_dir = Critbit.project_dir + "/" + name
-    mklib(dependency_dir)
-  end
-
-  # Add dependencies here
-  # depend(<other_gems>)
-  $DVLP_DEPEND.each do |dep|
-    depend(dep)
-  end if $DVLP_DEPEND
-
-  #----------------------------------------------------------------------------------------
-  # If we need to test for coverage
-  #----------------------------------------------------------------------------------------
-  
-  if $COVERAGE == 'true'
-  
-    require 'simplecov'
-    
-    SimpleCov.start do
-      @filters = []
-      add_group "Critbit"
-    end
-    
-  end
-
+Dir["#{Critbit.target_dir}/*.jar"].each do |jar|
+  require jar
 end

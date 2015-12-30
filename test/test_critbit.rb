@@ -44,6 +44,7 @@ class CritbitTest < Test::Unit::TestCase
 
       # Associates "a" to 1, "b" to 2, etc...
       crit = Critbit["a", 1, "b", 2, "c", 3, "d", 4]
+      p "printing crit: #{crit}"
 
       # Critbit will have the same content as the given hash
       crit2 = Critbit["a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5]
@@ -171,8 +172,6 @@ class CritbitTest < Test::Unit::TestCase
     #-------------------------------------------------------------------------------------
 
     should "merge critbits" do
-
-      
       
       h1 = Critbit["a" => 100, "b" => 200]
       h2 = Critbit["b" => 254, "c" => 300]

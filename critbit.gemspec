@@ -38,9 +38,9 @@ EOF
   gem.homepage = 'http://github.com/rbotafogo/critbit/wiki'
   gem.license = 'MIT'
 
-  gem.add_development_dependency('shoulda', '~> 3.5')
-  gem.add_development_dependency('simplecov', '~> 0.7', [">= 0.7.1"])
-  gem.add_development_dependency('yard', '~> 0.8', [">= 0.8.5.2"])
+  gem.add_development_dependency('shoulda', '~> 0')
+  gem.add_development_dependency('simplecov', '~> 0')
+  gem.add_development_dependency('yard', '~> 0')
 
   # ensure the gem is built out of versioned files
   gem.files = Dir['Rakefile', 'version.rb', 'config.rb', '{lib,test}/**/*.rb', 'test/**/*.csv',

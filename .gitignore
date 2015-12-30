@@ -6,3 +6,5 @@ doc
 .yardoc
 src/build/
 *.nc
+Gemfile.*
+*.gem

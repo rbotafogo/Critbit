@@ -1,7 +1,7 @@
 Announcement
 ============
 
-Critbit version 0.5 has been realeased.  A crit bit tree, also known as a Binary Patricia
+Critbit version 0.5.1 has been realeased.  A crit bit tree, also known as a Binary Patricia
 Trie is a trie (https://en.wikipedia.org/wiki/Trie), also called digital tree and sometimes
 radix tree or prefix tree (as they
 can be searched by prefixes), is an ordered tree data structure that is used to store a
@@ -133,6 +133,7 @@ Critbit installation and download:
 ==================================
 
   + Install Jruby
+  + bundle install or manually with
   + jruby –S gem install critbit
 
 Critbit Homepages:
@@ -149,5 +150,6 @@ Contributors are welcome.
 Critbit History:
 ================
 
+  + 30/12/2015: Version 0.5.1 - Tested with jruby 9.0.4, added bundler for development
   + 22/07/2015: Version 0.5.0 – Initial release.
 
