@@ -45,10 +45,10 @@ class CritbitTest < Test::Unit::TestCase
       # Associates "a" to 1, "b" to 2, etc...
       crit = Critbit["a", 1, "b", 2, "c", 3, "d", 4]
       p "printing crit: #{crit}"
-
+      
       # Critbit will have the same content as the given hash
       crit2 = Critbit["a" => 1, "b" => 2, "c" => 3, "d" => 4, "e" => 5]
-
+      
       # Create a Cribit from another Critbit, this will do a copy
       crit3 = Critbit[crit]
 
